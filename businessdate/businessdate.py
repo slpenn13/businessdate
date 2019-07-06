@@ -18,10 +18,10 @@ from calendar import monthrange, weekday, WEDNESDAY, FRIDAY
 from copy import copy
 from datetime import date, datetime, timedelta
 
-from basedate import BaseDate, BaseDateFloat, BaseDateTuple, BaseDateDatetimeDate, \
+from .basedate import BaseDate, BaseDateFloat, BaseDateTuple, BaseDateDatetimeDate, \
     is_leap_year, is_valid_ymd, days_in_year, days_in_month, \
     from_ymd_to_excel, from_excel_to_ymd
-from baseperiod import BasePeriod
+from .baseperiod import BasePeriod
 
 #: base date
 BASE_DATE = '20151231'  # date.today()  # BusinessDate() initializes with date of today
@@ -53,7 +53,7 @@ class TargetHolidays(BusinessHolidays):
         if super(BusinessHolidays, self).__contains__(item):
             return True
         if item.year not in self._target_days:
-            self._target_days[item.year] = target_days(item.year).keys()
+            self._target_days[item.year] = list(target_days(item.year).keys())
         return item in self._target_days[item.year]
 
 
@@ -103,7 +103,7 @@ class BusinessDate(BaseDate):
                 new_date = BusinessDate.from_excel(date_value)
             else:
                 new_date = BusinessDate.from_ordinal(date_value)
-        elif isinstance(date_value, (str, unicode)):
+        elif isinstance(date_value, str):
             new_date = BusinessDate.from_string(str(date_value))
         elif isinstance(date_value, (date, datetime)):
             new_date = BusinessDate.from_date(date_value)
@@ -493,7 +493,6 @@ class BusinessDate(BaseDate):
 
     # --- day count fraction methods -----------------------------------------
 
-
     # List of day count conventions
     # 30/360 (4.16(f) 2006 ISDA Definitions) [other names: 360/360]
     # Act/365.25 (not in ISDA Definitions)
@@ -558,7 +557,6 @@ class BusinessDate(BaseDate):
 
             return years_in_between + rest_year1 / (366.0 if is_leap_year(self.year) else 365.0) + rest_year2 / (
                 366.0 if is_leap_year(end.year) else 365.0)
-
 
             # elif end.year - self.year == 1:
             #   if BusinessDate.is_leap_year(self.year):
@@ -699,7 +697,7 @@ class BusinessPeriod(BasePeriod):
                 years += y
                 months += m
                 days += d
-        elif isinstance(period_in, (str, unicode)):
+        elif isinstance(period_in, str):
             period_in = str(period_in)
             if period_in.startswith('-'):
                 p = BusinessPeriod(period_in[1:])
@@ -817,7 +815,7 @@ class BusinessPeriod(BasePeriod):
         h = 365 * self.years + 30 * self.months + self.days + self.businessdays
         return hash(str(h))
 
-    def __nonzero__(self):
+    def __bool__(self):
         return True if self.years or self.months or self.days or self.businessdays else False
 
     def __add__(self, other):
@@ -843,7 +841,7 @@ class BusinessPeriod(BasePeriod):
     def __mul__(self, other):
         if isinstance(other, (list, tuple)):
             return [self * o for o in other]
-        if isinstance(other, (int, long)):
+        if isinstance(other, int):
             y = other * self.years
             m = other * self.months
             d = other * self.days
